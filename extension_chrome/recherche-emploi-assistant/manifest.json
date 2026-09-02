@@ -1,0 +1,22 @@
+{
+  "manifest_version": 3,
+  "name": "Recherche Emploi Assistant",
+  "version": "0.1.0",
+  "description": "Assistant local pour detecter et actionner les boutons de postulation sur les sites emploi.",
+  "permissions": ["activeTab", "scripting", "storage"],
+  "host_permissions": [
+    "https://www.jobwatch.ch/*",
+    "https://jobwatch.ch/*"
+  ],
+  "action": {
+    "default_title": "Recherche Emploi Assistant",
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://www.jobwatch.ch/*", "https://jobwatch.ch/*"],
+      "js": ["content-jobwatch.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

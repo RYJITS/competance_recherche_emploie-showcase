@@ -1,0 +1,783 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Recherche Emploi IA</title>
+    <link rel="stylesheet" href="app.css?v=20260627-action-queue">
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="Navigation">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true"></span>
+          <div>
+            <strong>Recherche Emploi</strong>
+            <small>V1 automatique</small>
+          </div>
+        </div>
+        <nav class="nav">
+          <button class="nav-item active" data-view="search">Recherche</button>
+          <button class="nav-item" data-view="spontaneous">Entreprises</button>
+          <button class="nav-item" data-view="applications">Candidatures</button>
+          <button class="nav-item" data-view="tracking">Suivi candidatures</button>
+          <button class="nav-item" data-view="automatic">Controle auto</button>
+          <button class="nav-item" data-view="settings">Reglages</button>
+          <button class="nav-item" data-view="sources">Sources</button>
+          <button class="nav-item" data-view="runs">Runs</button>
+        </nav>
+        <div class="status-panel">
+          <span class="status-dot" id="healthDot"></span>
+          <span id="healthText">Connexion</span>
+        </div>
+      </aside>
+
+      <main class="main">
+        <section class="topbar">
+          <div>
+            <h1 id="pageTitle">Recherche automatique</h1>
+            <p id="pageSubtitle">Offres filtrees selon ton profil et tes souhaits.</p>
+          </div>
+          <div class="topbar-actions">
+            <button class="secondary" id="saveSettingsBtn" disabled>Sauver</button>
+            <button class="secondary" id="runMistralSearchBtn" disabled>Recherche web Mistral</button>
+            <button class="primary" id="runSearchBtn" disabled>Lancer recherche</button>
+          </div>
+        </section>
+
+        <div class="process-banner" id="processBanner" role="status" aria-live="polite" aria-atomic="true" hidden>
+          <span class="loading-spinner" aria-hidden="true"></span>
+          <div>
+            <strong id="processTitle">Traitement en cours</strong>
+            <span id="processDetail">Merci de patienter...</span>
+          </div>
+        </div>
+
+        <section class="view active" id="view-search">
+          <div class="metrics-grid">
+            <article class="metric">
+              <span>Offres</span>
+              <strong id="metricOffers">0</strong>
+            </article>
+            <article class="metric metric-goal" id="metricGoalCard">
+              <span id="metricGoalLabel">Objectif 60</span>
+              <strong id="metricGoalOffers">0/60</strong>
+            </article>
+            <article class="metric">
+              <span>Sources</span>
+              <strong id="metricSources">0</strong>
+            </article>
+            <article class="metric">
+              <span>Erreurs</span>
+              <strong id="metricErrors">0</strong>
+            </article>
+            <article class="metric">
+              <span>Score min</span>
+              <strong id="metricScore">0.0</strong>
+            </article>
+            <article class="metric">
+              <span>Base brute</span>
+              <strong id="metricLiveTotal">0</strong>
+            </article>
+          </div>
+
+          <div class="quality-strip" id="searchQuality"></div>
+          <div class="diagnostic-strip" id="searchDiagnostics"></div>
+          <div class="source-report-strip" id="runSourceReports"></div>
+
+          <div class="toolbar">
+            <input id="resultFilter" type="search" placeholder="Filtrer les resultats">
+            <select id="decisionFilter">
+              <option value="profile">Profil fort</option>
+              <option value="apply">Candidater</option>
+              <option value="watch">A verifier</option>
+              <option value="all">Toutes utiles</option>
+              <option value="applied">Deja postule</option>
+              <option value="not_applied">Pas encore postule</option>
+              <option value="web">Web</option>
+              <option value="direct">Direct employer</option>
+              <option value="romandie">Suisse romande</option>
+              <option value="remote-europe">Remote Europe</option>
+            </select>
+            <select id="providerFilter" aria-label="Filtrer par source">
+              <option value="all">Toutes sources</option>
+              <option value="linkedin">LinkedIn</option>
+              <option value="jobmaps">Jobmaps</option>
+              <option value="jobup">Jobup</option>
+              <option value="jobs-ch">Jobs.ch</option>
+              <option value="jobwatch">Job Watch</option>
+              <option value="freework">Free-Work</option>
+              <option value="swissdevjobs">SwissDevJobs</option>
+              <option value="remotefr">RemoteFR</option>
+              <option value="remoteok">Remote OK</option>
+              <option value="remotive">Remotive</option>
+              <option value="arbeitnow">Arbeitnow</option>
+              <option value="curated">Verifiees IA</option>
+            </select>
+            <select id="scoreFilter">
+              <option value="0">Tous scores</option>
+              <option value="3.5">3.5+</option>
+              <option value="4">4.0+</option>
+              <option value="4.5">4.5+</option>
+            </select>
+          </div>
+
+          <div class="results" id="resultsList"></div>
+        </section>
+
+        <section class="view" id="view-spontaneous">
+          <div class="metrics-grid spontaneous-metrics">
+            <article class="metric">
+              <span>Annuaire local</span>
+              <strong id="metricSpontaneousDirectory">0</strong>
+            </article>
+            <article class="metric">
+              <span>Affichees</span>
+              <strong id="metricSpontaneousTargets">0</strong>
+            </article>
+            <article class="metric">
+              <span>Recommandees</span>
+              <strong id="metricSpontaneousRecommended">0</strong>
+            </article>
+            <article class="metric">
+              <span>Renommee moy.</span>
+              <strong id="metricSpontaneousAvg">0.0</strong>
+            </article>
+            <article class="metric">
+              <span>Details Zefix</span>
+              <strong id="metricSpontaneousDetails">0</strong>
+            </article>
+            <article class="metric">
+              <span>Contacts</span>
+              <strong id="metricSpontaneousContacts">0</strong>
+            </article>
+            <article class="metric">
+              <span>Avec offres</span>
+              <strong id="metricSpontaneousJobs">0</strong>
+            </article>
+          </div>
+
+          <div class="toolbar">
+            <input id="spontaneousFilter" type="search" placeholder="Filtrer entreprises, activite, profil" aria-label="Filtrer les entreprises">
+            <select id="spontaneousScoreFilter" aria-label="Filtrer par score">
+              <option value="0">Tous scores</option>
+              <option value="3.5">3.5+</option>
+              <option value="4">4.0+</option>
+              <option value="4.5">4.5+</option>
+            </select>
+            <select id="spontaneousModeFilter" aria-label="Filtrer par mode">
+              <option value="all">Toutes entreprises</option>
+              <option value="applied">Deja postule</option>
+              <option value="not_applied">Pas encore postule</option>
+              <option value="recommended">Recommandees profil</option>
+              <option value="education">Ecoles cantonales</option>
+              <option value="municipality">Communes</option>
+              <option value="directory">Annuaire local</option>
+              <option value="contact">Avec contact</option>
+              <option value="email">Avec email</option>
+              <option value="form">Avec formulaire</option>
+              <option value="pure_prospect">Sans annonce</option>
+              <option value="with_offers">Avec annonces</option>
+            </select>
+            <select id="spontaneousFamilyFilter" aria-label="Filtrer par famille">
+              <option value="all">Toutes familles</option>
+            </select>
+            <button class="secondary" id="refreshSpontaneousBtn" type="button" disabled>Rafraichir</button>
+          </div>
+
+          <div class="manual-company-scan">
+            <label class="field-block">
+              Nom ou lien
+              <input id="manualCompanyInput" type="search" placeholder="Entreprise ou https://..." autocomplete="off">
+            </label>
+            <button class="primary" id="scanManualCompanyBtn" type="button" disabled>Scanner</button>
+            <span id="manualCompanyStatus" aria-live="polite"></span>
+          </div>
+
+          <div class="diagnostic-strip" id="spontaneousDiagnostics"></div>
+          <div class="results" id="spontaneousTargetsList"></div>
+        </section>
+
+        <section class="view" id="view-applications">
+          <div class="metrics-grid application-metrics">
+            <article class="metric">
+              <span>Dossiers</span>
+              <strong id="metricApplicationValidations">0</strong>
+            </article>
+            <article class="metric">
+              <span>A relire</span>
+              <strong id="metricApplicationPending">0</strong>
+            </article>
+            <article class="metric">
+              <span>PDF prets</span>
+              <strong id="metricApplicationPrepared">0</strong>
+            </article>
+            <article class="metric">
+              <span>Envoyees</span>
+              <strong id="metricApplicationSent">0</strong>
+            </article>
+            <article class="metric">
+              <span>Supprimees</span>
+              <strong id="metricApplicationDeleted">0</strong>
+            </article>
+          </div>
+
+          <div class="toolbar">
+            <input id="applicationFilter" type="search" placeholder="Filtrer candidatures">
+            <select id="applicationStatusFilter" aria-label="Filtrer les candidatures">
+              <option value="all">Toutes</option>
+              <option value="prepared">Pretes</option>
+              <option value="sent">Envoyees</option>
+            </select>
+            <button class="secondary" id="refreshApplicationContactsBtn" type="button" disabled>Actualiser contacts</button>
+            <button class="secondary" id="refreshApplicationsBtn" type="button" disabled>Rafraichir</button>
+          </div>
+
+          <div class="application-layout application-layout-single">
+            <section class="source-panel">
+              <div class="section-head">
+                <h2>Candidatures validees</h2>
+                <span id="applicationDossierCount">0 dossiers</span>
+              </div>
+              <div class="application-list" id="applicationDossiersList"></div>
+            </section>
+          </div>
+        </section>
+
+        <section class="view" id="view-tracking">
+          <div class="metrics-grid application-metrics tracking-metrics">
+            <article class="metric">
+              <span>Total suivi</span>
+              <strong id="metricTrackingTotal">0</strong>
+            </article>
+            <article class="metric">
+              <span>Envoyees</span>
+              <strong id="metricTrackingSent">0</strong>
+            </article>
+            <article class="metric">
+              <span>Supprimees</span>
+              <strong id="metricTrackingDeleted">0</strong>
+            </article>
+            <article class="metric">
+              <span>En cours</span>
+              <strong id="metricTrackingPrepared">0</strong>
+            </article>
+          </div>
+
+          <div class="toolbar">
+            <input id="trackingFilter" type="search" placeholder="Filtrer suivi candidatures">
+            <select id="trackingStatusFilter" aria-label="Filtrer le suivi des candidatures">
+              <option value="all">Tout suivi</option>
+              <option value="sent">Envoyees</option>
+              <option value="deleted">Supprimees</option>
+              <option value="prepared">En cours</option>
+            </select>
+            <button class="secondary" id="refreshTrackingContactsBtn" type="button" disabled>Actualiser contacts</button>
+            <button class="secondary" id="refreshTrackingBtn" type="button" disabled>Rafraichir</button>
+          </div>
+
+          <div class="application-layout tracking-layout">
+            <section class="source-panel">
+              <div class="section-head">
+                <h2>Actives</h2>
+                <span id="trackingSentCount">0 candidatures</span>
+              </div>
+              <div class="application-list" id="trackingSentList"></div>
+            </section>
+            <section class="source-panel">
+              <div class="section-head">
+                <h2>Supprimees</h2>
+                <span id="trackingDeletedCount">0 candidatures</span>
+              </div>
+              <div class="application-list" id="trackingDeletedList"></div>
+            </section>
+          </div>
+        </section>
+
+        <section class="view" id="view-automatic">
+          <div class="metrics-grid auto-metrics">
+            <article class="metric">
+              <span>Mode</span>
+              <strong id="metricAutoMode">Off</strong>
+            </article>
+            <article class="metric">
+              <span>Prochain</span>
+              <strong id="metricAutoNext">--:--</strong>
+            </article>
+            <article class="metric">
+              <span>Dernier run</span>
+              <strong id="metricAutoSent">0</strong>
+            </article>
+            <article class="metric">
+              <span>Reponses</span>
+              <strong id="metricAutoReplies">0</strong>
+            </article>
+          </div>
+
+          <div class="auto-control-panel" id="autoControlPanel">
+            <div class="auto-control-copy">
+              <span class="auto-state-pill" id="autoSchedulerPill">Moteur en attente</span>
+              <h2>Automatisation planifiee</h2>
+              <p id="autoControlDetail">Aucun envoi planifie tant que le mode automatique est desactive.</p>
+            </div>
+            <button class="auto-toggle" id="toggleAutoModeBtn" type="button" aria-pressed="false" disabled>
+              <span class="auto-toggle-track" aria-hidden="true"><span></span></span>
+              <strong id="autoToggleText">Activer</strong>
+            </button>
+          </div>
+
+          <div class="toolbar auto-toolbar">
+            <button class="secondary" id="refreshAutoModeBtn" type="button" disabled>Rafraichir</button>
+            <button class="secondary" id="testAutoModeBtn" type="button" disabled>Tester + generer</button>
+            <button class="primary" id="runAutoModeBtn" type="button" disabled>Lancer maintenant</button>
+            <button class="secondary" id="checkMailRepliesBtn" type="button" disabled>Verifier mails</button>
+          </div>
+
+          <div class="diagnostic-strip" id="autoModeDiagnostics"></div>
+
+          <section class="auto-map" aria-labelledby="autoMapTitle">
+            <div class="section-head auto-map-head">
+              <div>
+                <h2 id="autoMapTitle">Diagramme controle auto</h2>
+                <p id="autoMapSubtitle">Actions, donnees, conditions et sorties reliees.</p>
+              </div>
+              <span class="auto-map-state is-off" id="autoMapState">Non charge</span>
+            </div>
+            <div class="auto-map-grid" id="autoWorkflowMap"></div>
+          </section>
+
+          <div class="results" id="autoModeResults"></div>
+
+          <section class="settings-group">
+            <div class="section-head">
+              <h2>Planification</h2>
+            </div>
+            <div class="form-grid">
+              <label class="check-label">
+                Activer le mode automatique
+                <input id="autoModeEnabled" type="checkbox">
+              </label>
+              <label class="check-label">
+                Mode test seulement
+                <input id="autoDryRunOnly" type="checkbox">
+              </label>
+              <label>
+                Heures d envoi
+                <textarea id="autoSchedules" rows="3" placeholder="08:30&#10;17:30"></textarea>
+              </label>
+              <label>
+                Postulations / run
+                <input id="autoMaxApplications" type="number" min="1" max="30" step="1">
+              </label>
+              <label>
+                Fenetre minutes
+                <input id="autoScheduleWindow" type="number" min="1" max="120" step="1">
+              </label>
+              <label>
+                Fuseau
+                <input id="autoTimezone" type="text">
+              </label>
+            </div>
+          </section>
+
+          <section class="settings-group">
+            <div class="section-head">
+              <h2>Criteres d envoi</h2>
+            </div>
+            <div class="form-grid">
+              <label class="check-label">
+                Entreprise renommee
+                <input id="autoRequireRenowned" type="checkbox">
+              </label>
+              <label>
+                Score entreprise min.
+                <input id="autoMinReputation" type="number" min="0" max="5" step="0.1">
+              </label>
+              <label class="check-label">
+                Email obligatoire
+                <input id="autoRequireEmail" type="checkbox">
+              </label>
+              <label class="check-label">
+                Pas encore postule
+                <input id="autoRequireNotApplied" type="checkbox">
+              </label>
+              <label class="check-label">
+                Bloquer entreprise deja contactee
+                <input id="autoBlockCompanyIfSent" type="checkbox">
+              </label>
+              <label class="check-label">
+                Actualiser contacts avant envoi
+                <input id="autoRefreshContacts" type="checkbox">
+              </label>
+              <label class="check-label">
+                Dossiers prets
+                <input id="autoIncludePrepared" type="checkbox">
+              </label>
+              <label class="check-label">
+                Valider la file
+                <input id="autoIncludeValidationQueue" type="checkbox">
+              </label>
+              <label class="check-label">
+                Spontanees si aucune annonce
+                <input id="autoSpontaneousFallback" type="checkbox">
+              </label>
+              <label class="field-wide">
+                Entreprises exclues
+                <textarea id="autoExcludedCompanies" rows="4" placeholder="Etat"></textarea>
+              </label>
+            </div>
+          </section>
+
+          <section class="settings-group">
+            <div class="section-head">
+              <h2>Telegram et mails</h2>
+            </div>
+            <div class="form-grid">
+              <label class="check-label">
+                Confirmation Telegram
+                <input id="autoTelegramConfirmations" type="checkbox">
+              </label>
+              <label class="check-label">
+                Suivi mails entrant
+                <input id="autoMailFollowupEnabled" type="checkbox">
+              </label>
+              <label class="check-label">
+                Reponses par Telegram
+                <input id="autoTelegramReplies" type="checkbox">
+              </label>
+              <label class="check-label">
+                Non lus seulement
+                <input id="autoMailOnlyUnread" type="checkbox">
+              </label>
+              <label>
+                Intervalle mails min.
+                <input id="autoMailInterval" type="number" min="5" max="1440" step="5">
+              </label>
+              <label>
+                Fenetre mails jours
+                <input id="autoMailLookback" type="number" min="1" max="120" step="1">
+              </label>
+              <label>
+                Messages max
+                <input id="autoMailMaxMessages" type="number" min="5" max="200" step="5">
+              </label>
+              <label>
+                Dossiers mails
+                <textarea id="autoMailFolders" rows="3" placeholder="INBOX"></textarea>
+              </label>
+            </div>
+          </section>
+
+        </section>
+
+        <section class="view" id="view-settings">
+          <section class="settings-group">
+            <div class="section-head">
+              <h2>Coordonnees candidature</h2>
+            </div>
+            <div class="form-grid form-grid-compact">
+              <label>
+                Nom complet
+                <input id="candidateName" type="text" autocomplete="name">
+              </label>
+              <label>
+                Email
+                <input id="candidateEmail" type="email" autocomplete="email">
+              </label>
+              <label>
+                Telephone
+                <input id="candidatePhone" type="tel" autocomplete="tel">
+              </label>
+              <label>
+                Site / portfolio
+                <input id="candidateWebsite" type="text" autocomplete="url">
+              </label>
+              <label>
+                Localisation
+                <input id="candidateLocation" type="text">
+              </label>
+              <label>
+                Mobilite
+                <input id="candidateRemote" type="text">
+              </label>
+            </div>
+          </section>
+
+          <section class="settings-group">
+            <div class="section-head">
+              <h2>Priorites candidature</h2>
+            </div>
+            <div class="form-grid">
+              <label>
+                Style de selection
+                <select id="applicationContentStyle">
+                  <option value="business-impact">Metier / impact</option>
+                  <option value="balanced">Equilibre metier-technique</option>
+                  <option value="technical-targeted">Technique cible</option>
+                </select>
+              </label>
+              <label class="check-label">
+                Limiter les listes d outils
+                <input id="limitTechnicalTools" type="checkbox">
+              </label>
+              <label class="field-wide">
+                Priorites de selection
+                <textarea id="applicationContentPriorities" rows="5"></textarea>
+              </label>
+              <label class="field-wide">
+                Instruction personnelle
+                <textarea id="applicationExtraGuidance" rows="3"></textarea>
+              </label>
+              <label class="field-wide">
+                Instruction spontanee
+                <textarea id="spontaneousGuidance" rows="5"></textarea>
+              </label>
+            </div>
+          </section>
+
+          <section class="settings-group">
+            <div class="section-head">
+              <h2>Controle qualite Qwen</h2>
+            </div>
+            <div class="form-grid">
+              <label class="check-label">
+                Activer le controle qualite
+                <input id="qualityControlEnabled" type="checkbox">
+              </label>
+              <label class="check-label">
+                Obligatoire avant envoi auto
+                <input id="qualityRequireAuto" type="checkbox">
+              </label>
+              <label class="check-label">
+                Bloquer si Qwen indisponible
+                <input id="qualityBlockUnavailable" type="checkbox">
+              </label>
+              <label class="check-label">
+                Controler aussi les envois manuels
+                <input id="qualityReviewManual" type="checkbox">
+              </label>
+              <label>
+                Modele Qwen
+                <input id="qualityModel" type="text" placeholder="qwen-plus">
+              </label>
+              <label>
+                Score auto minimum
+                <input id="qualityMinScoreAuto" type="number" min="0" max="100" step="1">
+              </label>
+              <label>
+                Signaux spontanee min.
+                <input id="qualitySpontaneousMinSignals" type="number" min="0" max="6" step="1">
+              </label>
+              <label>
+                Base URL Qwen
+                <input id="qualityBaseUrl" type="text" placeholder="https://dashscope-intl.aliyuncs.com/compatible-mode/v1">
+              </label>
+            </div>
+          </section>
+
+          <section class="settings-group">
+            <div class="section-head">
+              <h2>Profil et recherche</h2>
+            </div>
+          <div class="form-grid">
+            <label>
+              Titre cible
+              <input id="targetTitle" type="text">
+            </label>
+            <label>
+              Niveau
+              <input id="seniority" type="text">
+            </label>
+            <label>
+              Langues
+              <input id="preferredLanguages" type="text">
+            </label>
+            <label>
+              Souhaits forts
+              <input id="mustHave" type="text">
+            </label>
+            <label>
+              A eviter
+              <input id="avoid" type="text">
+            </label>
+            <label>
+              Score minimum
+              <input id="minimumScore" type="number" min="1" max="5" step="0.1">
+            </label>
+            <label>
+              Tranche analysee / source
+              <input id="maxResultsPerSource" type="number" min="1" max="300" step="10">
+            </label>
+            <label class="check-label">
+              Exiger Suisse / remote
+              <input id="requireLocationMatch" type="checkbox">
+            </label>
+            <label>
+              Requete live Suisse
+              <input id="liveQuery" type="text">
+            </label>
+            <label>
+              Angles officiels Jobmaps
+              <textarea id="liveQueries" rows="5"></textarea>
+            </label>
+            <label>
+              Ville live (vide = Suisse)
+              <input id="liveCity" type="text" placeholder="Lausanne, Geneve, Zurich">
+            </label>
+            <label>
+              Rayon live km
+              <input id="liveRadiusKm" type="number" min="1" max="100" step="1">
+            </label>
+            <label>
+              Limite live
+              <input id="liveLimit" type="number" min="1" max="50" step="1">
+            </label>
+            <label>
+              Entreprises affichees
+              <input id="spontaneousTargetLimit" type="number" min="1" max="3000" step="100">
+            </label>
+            <label class="check-label">
+              Recherche internet gratuite
+              <input id="internetEnabled" type="checkbox">
+            </label>
+            <label>
+              Resultats web / requete
+              <input id="maxWebResultsPerQuery" type="number" min="1" max="50" step="1">
+            </label>
+            <label>
+              Offres finales max
+              <input id="maxOffersFinal" type="number" min="1" max="300" step="10">
+            </label>
+            <label>
+              Decision minimale
+              <select id="minDecision">
+                <option value="apply">Apply</option>
+                <option value="watch">Watch</option>
+              </select>
+            </label>
+            <label>
+              Requetes internet
+              <textarea id="internetQueries" rows="6"></textarea>
+            </label>
+            <label>
+              Mots-cles inclus
+              <textarea id="includeKeywords" rows="4"></textarea>
+            </label>
+            <label>
+              Mots-cles exclus
+              <textarea id="excludeKeywords" rows="4"></textarea>
+            </label>
+            <label>
+              Lieux
+              <textarea id="locations" rows="4"></textarea>
+            </label>
+            <label>
+              Lieux bloques
+              <textarea id="blockedLocations" rows="4"></textarea>
+            </label>
+          </div>
+          </section>
+        </section>
+
+        <section class="view" id="view-sources">
+          <div class="source-layout">
+            <section class="source-panel">
+              <div class="section-head">
+                <h2>Recherche sources</h2>
+                <span id="sourceDiscoveryCount">0 resultats</span>
+              </div>
+              <div class="discovery-controls">
+                <label>
+                  Region
+                  <select id="discoveryRegion"></select>
+                </label>
+                <label>
+                  Rayon km
+                  <input id="discoveryRadius" type="number" min="5" max="1000" step="5">
+                </label>
+                <label>
+                  Reputation min
+                  <input id="discoveryReputation" type="number" min="1" max="5" step="0.1">
+                </label>
+                <label>
+                  Tags
+                  <input id="discoveryTags" type="text" list="sourceTagSuggestions">
+                  <datalist id="sourceTagSuggestions"></datalist>
+                </label>
+                <label class="compact-check">
+                  Remote inclus
+                  <input id="discoveryRemote" type="checkbox">
+                </label>
+                <div class="discovery-actions">
+                  <button class="secondary" id="discoverSourcesBtn" type="button" disabled>Rechercher</button>
+                  <button class="primary" id="importSourcesBtn" type="button" disabled>Ajouter selection</button>
+                </div>
+              </div>
+              <div class="discovery-stats" id="sourceDiscoveryStats"></div>
+              <div class="candidate-list" id="sourceCandidates"></div>
+
+              <div class="registry-box">
+                <div class="section-head">
+                  <h2>Catalogue officiel suisse</h2>
+                  <span id="registryCount">0 resultats</span>
+                </div>
+                <div class="registry-controls">
+                  <input id="registryQuery" type="search" placeholder="Nom entreprise, ex: Scandit">
+                  <button class="secondary" id="registrySearchBtn" type="button" disabled>Verifier Zefix</button>
+                </div>
+                <div class="registry-results" id="registryResults"></div>
+              </div>
+            </section>
+
+            <section class="source-panel source-editor">
+              <div class="section-head">
+                <h2>Sources actives</h2>
+                <span id="activeSourcesCount">0 sources</span>
+              </div>
+              <div class="source-health" id="sourceHealthStats"></div>
+              <details class="field-help">
+                <summary>Aide champs sources</summary>
+                <div class="field-help-body">
+                  <p><strong>Actif:</strong> active ou desactive une source sans la supprimer.</p>
+                  <p><strong>Entreprise:</strong> nom affiche dans les resultats et les runs.</p>
+                  <p><strong>Provider:</strong> moteur utilise. Exemple: jobmaps pour live Suisse, greenhouse/lever/ashby/smartrecruiters/workable pour pages carrieres, manual pour suivi sans scan automatique.</p>
+                  <p><strong>Slug:</strong> identifiant technique du job board. Exemple: mistral, scandit, swiss-live.</p>
+                </div>
+              </details>
+              <div class="source-row source-row-head">
+                <span>Actif</span>
+                <span>Entreprise</span>
+                <span>Provider</span>
+                <span>Slug</span>
+                <span>Sante</span>
+                <span></span>
+              </div>
+              <div id="sourcesList"></div>
+              <div class="source-actions">
+                <button class="secondary" id="addSourceBtn" type="button">Ajouter source</button>
+                <button class="primary" id="seedViableSourcesBtn" type="button" disabled>Creer sources viables</button>
+                <button class="secondary" id="optimizeSourcesBtn" type="button" disabled>Desactiver bruit</button>
+              </div>
+            </section>
+          </div>
+        </section>
+
+        <section class="view" id="view-runs">
+          <div class="runs-list" id="runsList"></div>
+        </section>
+      </main>
+    </div>
+
+    <div class="modal-backdrop" id="applicationModal" hidden>
+      <section class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="applicationModalTitle">
+        <div class="modal-head">
+          <h2 id="applicationModalTitle">Dossier candidature</h2>
+          <button class="secondary icon-button" id="closeApplicationModalBtn" type="button" aria-label="Fermer">X</button>
+        </div>
+        <pre class="application-document" id="applicationModalContent"></pre>
+      </section>
+    </div>
+
+    <script src="app.js?v=20260627-action-queue" type="module"></script>
+  </body>
+</html>

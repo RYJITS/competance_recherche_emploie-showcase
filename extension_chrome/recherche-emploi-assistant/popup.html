@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Recherche Emploi Assistant</title>
+    <link rel="stylesheet" href="popup.css">
+  </head>
+  <body>
+    <main>
+      <header>
+        <strong>Recherche Emploi</strong>
+        <span id="siteBadge">Page inconnue</span>
+      </header>
+
+      <section class="status" id="statusBox">
+        <span id="statusTitle">Pret</span>
+        <small id="statusDetail">Ouvre une annonce JobWatch puis lance l'analyse.</small>
+      </section>
+
+      <div class="actions">
+        <button id="analyzeBtn" type="button">Analyser</button>
+        <button id="applyBtn" type="button">Postuler</button>
+      </div>
+
+      <section class="result" id="resultBox" hidden>
+        <dl>
+          <div>
+            <dt>Boutons</dt>
+            <dd id="applyCount">0</dd>
+          </div>
+          <div>
+            <dt>Etat</dt>
+            <dd id="pageState">-</dd>
+          </div>
+        </dl>
+        <p id="resultMessage"></p>
+      </section>
+    </main>
+
+    <script src="popup.js"></script>
+  </body>
+</html>
