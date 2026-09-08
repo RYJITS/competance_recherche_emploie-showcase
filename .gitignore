@@ -1,49 +1,96 @@
-# Fichiers locaux et temporaires
+# OS / editors
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Secrets / local environment
 .env
-.env*
-.env.local
+.env.*
 !.env.example
-node_modules
+*.secret.*
+*.local
+*.local.*
+
+# Dependencies and caches
 node_modules/
+**/node_modules/
+**/__pycache__/
+*.pyc
+.pytest_cache/
+.cache/
+
+# Local services and downloaded runtime payloads
+_services/**/.venv/
+_services/**/*.tar.gz
+_services/**/searxng-src/
+
+# Logs, browser traces and temporary files
+*.log
+*.tmp
+*.bak
+.playwright-mcp/
+_tmp/
+
+# Third-party tool kept as its own repository
+career-ops/
+
+# Generated / sensitive job-search pipeline data.
+# Keep folder placeholders, but do not commit raw offers, runs, validations,
+# applications, or archives unless intentionally whitelisted later.
+00_inbox/*
+!00_inbox/.gitkeep
+01_sources_offres/*
+!01_sources_offres/.gitkeep
+02_runs/*
+!02_runs/.gitkeep
+03_validations_telegram/*
+!03_validations_telegram/.gitkeep
+04_dossiers_valides/*
+!04_dossiers_valides/.gitkeep
+05_postulations/*
+!05_postulations/.gitkeep
+06_archives/*
+!06_archives/.gitkeep
+
+# Ajout automatique orchestrateur - publication GitHub
 session
 sessions
 baileys-auth
 .whatsapp-web-profile
 .whatsapp-web-chrome-profile
-*.log
-logs
-logs/
 *.pem
 *.key
 *.p12
 *.pfx
+
+# Ajout automatique orchestrateur - publication GitHub
+.project-orchestrator.json
 metadata.json
+AUDIT_*.json
+AUDIT_*.md
+RAPPORT_*.json
+RAPPORT_*.md
+PREPARATION_GITHUB*.json
+PREPARATION_GITHUB*.md
+docs/captures/
+captures/
+
+# Orchestrateur - publication GitHub publique
+.env*
+.env.local
 dist/
 build/
-out/
 .next/
 .nuxt/
-.cache/
 .playwright-cli/
-.playwright-mcp/
 coverage/
-sessions/
-session/
-baileys-auth/
 backups/
 backup/
-archives/
 reports/
 automatisations/99_Resultats/
 workflow_app/data/
-__pycache__/
-.pytest_cache/
 .mypy_cache/
-.venv/
-venv/
-_tmp/
-searxng-src/
-_archive/
 _deploy/
 output/
 99_Archive/
@@ -54,5 +101,3 @@ docs/daily-tests/evidence/
 *.zip
 *.7z
 *.rar
-*.bak
-*.pyc
